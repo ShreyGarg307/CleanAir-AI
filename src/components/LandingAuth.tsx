@@ -7,34 +7,9 @@ import { useTheme } from '../context/ThemeContext';
 export function LandingAuth() {
   const { loginAsCitizen, loginAsMunicipal, loading } = useAuth();
   const { aqiIndex } = useAqi();
-  const [showMunicipalForm, setShowMunicipalForm] = useState(false);
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [citizenError, setCitizenError] = useState('');
-  const [municipalError, setMunicipalError] = useState('');
-
   // Accessibility controls
   const [highContrast, setHighContrast] = useState(false);
   const { theme, toggleTheme, largeText, toggleLargeText } = useTheme();
-
-  const handleMunicipalLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setMunicipalError('');
-    try {
-      await loginAsMunicipal(email, password);
-    } catch (err: any) {
-      setMunicipalError(err.message || 'Login failed');
-    }
-  };
-
-  const handleCitizenLogin = async () => {
-    setCitizenError('');
-    try {
-      await loginAsCitizen();
-    } catch (err: any) {
-      setCitizenError(err.message || 'Google Sign-in failed. Please try again.');
-    }
-  };
 
 
   // Use real AQI from context for Marquee
@@ -86,14 +61,14 @@ export function LandingAuth() {
             </button>
 
             <button
-              onClick={handleCitizenLogin} disabled={loading}
+              onClick={() => loginAsCitizen()} disabled={loading}
               className="px-4 py-2 text-sm font-semibold text-slate-600 hover:text-slate-900 transition-colors cursor-pointer"
             >
               Citizen Portal
             </button>
             <button
-              onClick={() => setShowMunicipalForm(true)} disabled={loading}
-              className="px-5 py-2.5 bg-slate-900 text-white text-sm rounded-full font-semibold shadow-sm hover:bg-slate-800 transition-colors flex items-center gap-2"
+              onClick={() => loginAsMunicipal()} disabled={loading}
+              className="px-5 py-2.5 bg-slate-900 text-white text-sm rounded-full font-semibold shadow-sm hover:bg-slate-800 transition-colors flex items-center gap-2 cursor-pointer"
             >
               <Shield className="w-4 h-4" />
               Municipal Command
@@ -122,7 +97,7 @@ export function LandingAuth() {
 
             {/* Citizen Card */}
             <div
-              onClick={() => !loading && handleCitizenLogin()}
+              onClick={() => !loading && loginAsCitizen()}
               className={`group bg-white/80 backdrop-blur-md border border-slate-200/50 p-8 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 cursor-pointer flex flex-col ${loading ? 'opacity-70 pointer-events-none' : ''}`}
             >
               <div className="w-12 h-12 bg-emerald-100 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
@@ -135,77 +110,23 @@ export function LandingAuth() {
               <div className="text-emerald-600 font-bold flex items-center gap-2 group-hover:gap-3 transition-all">
                 {loading ? 'Authenticating...' : 'Citizen Auth →'}
               </div>
-              {citizenError && (
-                <div className="mt-4 p-3 bg-rose-50 text-rose-700 text-xs rounded-lg border border-rose-200">
-                  {citizenError.includes('unauthorized-domain') ? (
-                    <span><span className="font-bold block mb-1">Setup Required:</span> This domain is not authorized for Google Sign-in.</span>
-                  ) : (
-                    citizenError
-                  )}
-                </div>
-              )}
             </div>
 
             {/* Municipal Card */}
-            <div className={`group bg-white/80 backdrop-blur-md border border-slate-200/50 p-8 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 flex flex-col ${showMunicipalForm ? 'hover:-translate-y-0 hover:shadow-xl' : ''}`}>
+            <div
+              onClick={() => !loading && loginAsMunicipal()}
+              className={`group bg-white/80 backdrop-blur-md border border-slate-200/50 p-8 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 cursor-pointer flex flex-col ${loading ? 'opacity-70 pointer-events-none' : ''}`}
+            >
               <div className="w-12 h-12 bg-blue-100 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
                 <Shield className="w-6 h-6 text-blue-600" />
               </div>
-
-              {!showMunicipalForm ? (
-                <div className="flex-1 flex flex-col cursor-pointer" onClick={() => !loading && setShowMunicipalForm(true)}>
-                  <h3 className="text-2xl font-bold text-slate-900 mb-3">Municipal Command</h3>
-                  <p className="text-slate-600 mb-8 flex-1">
-                    Deploy water sprayers, manage incident dispatches, audit database.
-                  </p>
-                  <div className="text-blue-600 font-bold flex items-center gap-2 group-hover:gap-3 transition-all">
-                    {loading ? 'Authenticating...' : 'Officer Auth →'}
-                  </div>
-                </div>
-              ) : (
-                <form onSubmit={handleMunicipalLogin} className="flex-1 flex flex-col">
-                  <h3 className="text-lg font-bold text-slate-900 mb-4">Officer Login</h3>
-                  <input
-                    type="email"
-                    placeholder="Email address"
-                    className="w-full px-4 py-2 mb-3 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                  />
-                  <input
-                    type="password"
-                    placeholder="Password"
-                    className="w-full px-4 py-2 mb-4 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                  />
-                  {municipalError && (
-                    <div className="mt-1 mb-4 p-3 bg-rose-50 text-rose-700 text-xs rounded-lg border border-rose-200">
-                      {municipalError.includes('INVALID_LOGIN_CREDENTIALS') ? 'Invalid email or password.' : municipalError}
-                    </div>
-                  )}
-
-                  <div className="flex items-center justify-between mt-auto pt-2">
-                    <button
-                      type="button"
-                      onClick={(e) => { e.stopPropagation(); setShowMunicipalForm(false); }}
-                      className="text-sm text-slate-500 hover:text-slate-700 font-medium transition-colors"
-                      disabled={loading}
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      type="submit"
-                      disabled={loading}
-                      className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg shadow-sm transition-colors flex items-center gap-2 disabled:opacity-70"
-                    >
-                      {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Login'}
-                    </button>
-                  </div>
-                </form>
-              )}
+              <h3 className="text-2xl font-bold text-slate-900 mb-3">Municipal Command</h3>
+              <p className="text-slate-600 mb-8 flex-1">
+                Deploy water sprayers, manage incident dispatches, audit database.
+              </p>
+              <div className="text-blue-600 font-bold flex items-center gap-2 group-hover:gap-3 transition-all">
+                {loading ? 'Authenticating...' : 'Officer Auth →'}
+              </div>
             </div>
           </div>
         </main>
@@ -294,12 +215,12 @@ export function LandingAuth() {
             <h4 className="font-bold text-slate-200 text-xs uppercase tracking-wider mb-4">Platform Access</h4>
             <ul className="space-y-2.5 text-xs font-semibold">
               <li>
-                <button onClick={handleCitizenLogin} className="hover:text-emerald-400 transition-colors text-slate-400 cursor-pointer">
+                <button onClick={() => loginAsCitizen()} className="hover:text-emerald-400 transition-colors text-slate-400 cursor-pointer">
                   Citizen Feed & Map
                 </button>
               </li>
               <li>
-                <button onClick={() => setShowMunicipalForm(true)} className="hover:text-blue-400 transition-colors text-slate-400 cursor-pointer">
+                <button onClick={() => loginAsMunicipal()} className="hover:text-blue-400 transition-colors text-slate-400 cursor-pointer">
                   Municipal Command Dashboard
                 </button>
               </li>

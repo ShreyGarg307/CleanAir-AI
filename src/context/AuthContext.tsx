@@ -17,7 +17,7 @@ interface AuthContextType {
   currentUser: User | null;
   loading: boolean;
   loginAsCitizen: () => Promise<void>;
-  loginAsMunicipal: (email: string, password: string) => Promise<void>;
+  loginAsMunicipal: (email?: string, password?: string) => Promise<void>;
   logout: () => Promise<void>;
 }
 
@@ -61,82 +61,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const loginAsCitizen = async () => {
-    try {
-      console.log("Google Auth Triggered");
-      const provider = new GoogleAuthProvider(); // Instantiated directly here as requested
-      const result = await signInWithPopup(auth, provider);
-      console.log("Google Auth Success! User UID:", result.user.uid);
-      
-      console.log("Checking if user doc exists in Firestore...");
-      const userRef = doc(db, 'users', result.user.uid);
-      const userSnap = await getDoc(userRef);
-      if (!userSnap.exists()) {
-        console.log("Creating new user doc for citizen...");
-        await setDoc(userRef, { role: 'citizen', email: result.user.email });
-      } else {
-        console.log("User doc already exists.");
-      }
-      
-      setCurrentUser(result.user);
-      setUserRole('citizen');
-    } catch (error: any) {
-      console.warn("Google Auth Error:", error.message);
-      if (error.code === 'auth/unauthorized-domain' || error.code === 'auth/network-request-failed' || error.code === 'auth/popup-closed-by-user' || error.code === 'auth/popup-blocked') {
-        console.warn("Demo Fallback: Mocking Citizen login due to Firebase Auth limits in this environment.");
-        setCurrentUser({ uid: 'mock-citizen-uid', email: 'demo-citizen@example.com' } as any);
-        setUserRole('citizen');
-        return;
-      }
-      throw error;
-    }
+    console.log("Direct Citizen Login Activated (Bypass Google Auth)");
+    setCurrentUser({
+      uid: 'demo-citizen-uid',
+      email: 'citizen@cleanair.ai',
+      displayName: 'Demo Citizen'
+    } as any);
+    setUserRole('citizen');
   };
 
-  const loginAsMunicipal = async (email: string, password: string) => {
-    try {
-      console.log(`Email Auth Triggered for email: ${email}`);
-      const result = await signInWithEmailAndPassword(auth, email, password);
-      console.log("Email Auth Success! User UID:", result.user.uid);
-      
-      console.log("Fetching Firestore Doc to verify role...");
-      const userRef = doc(db, 'users', result.user.uid);
-      const userSnap = await getDoc(userRef);
-      
-      if (userSnap.exists() && userSnap.data().role === 'municipal') {
-        console.log("Role verified as municipal officer.");
-        setCurrentUser(result.user);
-        setUserRole('municipal');
-      } else {
-        console.error("Authorization Failed: User is not a municipal officer in Firestore.");
-        await signOut(auth); // Sign out if not authorized
-        throw new Error("Unauthorized access. Municipal role required.");
-      }
-    } catch (error: any) {
-      console.warn("Municipal Auth Error:", error.message);
-      if (error.code === 'auth/invalid-credential' || error.code === 'auth/user-not-found' || error.code === 'auth/network-request-failed' || error.code === 'auth/wrong-password') {
-         console.warn("Demo Fallback: Mocking Municipal login for demo credentials.");
-         setCurrentUser({ uid: 'mock-municipal-uid', email: 'admin@cleanair.gov' } as any);
-         setUserRole('municipal');
-         return;
-      }
-      throw error;
-    }
+  const loginAsMunicipal = async (email?: string, password?: string) => {
+    console.log("Direct Municipal Login Activated (Bypass Credentials)");
+    setCurrentUser({
+      uid: 'demo-municipal-uid',
+      email: 'admin@cleanair.gov',
+      displayName: 'Duty Officer'
+    } as any);
+    setUserRole('municipal');
   };
 
   const logout = async () => {
+    console.log("Logout Triggered");
+    setUserRole(null);
+    setCurrentUser(null);
     try {
-      console.log("Logout Triggered");
-      if (currentUser?.uid.startsWith('mock-')) {
-        setUserRole(null);
-        setCurrentUser(null);
-        console.log("Mock Logout Success");
-        return;
-      }
       await signOut(auth);
-      setUserRole(null);
-      setCurrentUser(null);
-      console.log("Logout Success");
-    } catch (error: any) {
-      console.error("Logout Error:", error.message);
+    } catch (e) {
+      console.warn("Sign out error:", e);
     }
   };
 
