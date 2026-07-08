@@ -88,40 +88,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const loginAsMunicipal = async (email: string, password: string) => {
     try {
       console.log(`Email Auth Triggered for email: ${email}`);
-      let result;
-      try {
-        result = await signInWithEmailAndPassword(auth, email, password);
-      } catch (authError: any) {
-        // If the user does not exist in Firebase, auto-register them to simplify first-time officer setup
-        if (
-          authError.code === 'auth/user-not-found' || 
-          authError.code === 'auth/invalid-credential'
-        ) {
-          console.log("User not found or credentials invalid. Attempting auto-registration as officer...");
-          result = await createUserWithEmailAndPassword(auth, email, password);
-          console.log("Auto-registration success! Creating Firestore role documentation...");
-          const userRef = doc(db, 'users', result.user.uid);
-          await setDoc(userRef, { role: 'municipal', email: result.user.email });
-        } else {
-          throw authError;
-        }
-      }
-
+      const result = await signInWithEmailAndPassword(auth, email, password);
       console.log("Email Auth Success! User UID:", result.user.uid);
       
       console.log("Fetching Firestore Doc to verify role...");
       const userRef = doc(db, 'users', result.user.uid);
-      let userSnap = await getDoc(userRef);
+      const userSnap = await getDoc(userRef);
       
-      if (!userSnap.exists() || userSnap.data().role !== 'municipal') {
-        console.log("Registering/Correcting user role as municipal in Firestore...");
-        await setDoc(userRef, { role: 'municipal', email: result.user.email }, { merge: true });
-        userSnap = await getDoc(userRef);
+      if (userSnap.exists() && userSnap.data().role === 'municipal') {
+        console.log("Role verified as municipal officer.");
+        setCurrentUser(result.user);
+        setUserRole('municipal');
+      } else {
+        console.error("Authorization Failed: User is not marked as 'municipal' in Firestore.");
+        await signOut(auth); // Sign out unauthorized user
+        throw new Error("Access Denied: Your account does not have the 'municipal' role assigned in Firestore.");
       }
-
-      console.log("Role verified as municipal officer.");
-      setCurrentUser(result.user);
-      setUserRole('municipal');
     } catch (error: any) {
       console.error("Municipal Auth Error:", error.message);
       throw error;
