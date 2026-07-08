@@ -1,0 +1,8 @@
+{
+  "name": "CleanAir & Clear Streets",
+  "description": "Civic-tech application for tracking air quality and street conditions.",
+  "requestFramePermissions": [
+    "geolocation"
+  ],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
