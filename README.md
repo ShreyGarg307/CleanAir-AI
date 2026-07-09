@@ -13,8 +13,10 @@ View your app in AI Studio: https://ai.studio/apps/26563f37-c98b-4f70-a069-30025
 ⭐⭐⭐ Municipal Login Credentials ⭐⭐⭐
 
 email -- email@gmail.com
-
 pass -- 123456
+or
+email -- test@gmail.com
+pass -- test12345
 
 use this too login in Municipal Portal 
 
