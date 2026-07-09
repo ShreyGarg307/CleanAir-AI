@@ -164,7 +164,8 @@ export function LandingAuth() {
                 </div>
               ) : (
                 <form onSubmit={handleMunicipalLogin} className="flex-1 flex flex-col">
-                  <h3 className="text-lg font-bold text-slate-900 mb-4">Officer Login</h3>
+                  <h3 className="text-lg font-bold text-slate-900 mb-2">Officer Login</h3>
+                  <p className="text-xs text-slate-500 mb-4">See Readme for Ofiicer Credentials</p>
                   <input
                     type="email"
                     placeholder="Email address"
